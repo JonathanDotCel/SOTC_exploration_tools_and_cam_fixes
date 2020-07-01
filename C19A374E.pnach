@@ -1,0 +1,247 @@
+comment=SOTC Playability Fixes + Exploration Hacks v1, sickle, Oct2019
+http://github.com/JonathanDotCel/
+
+//
+// Tweaks:
+// Camera centered horizontally
+// Change to default camera height + pitch
+// Disabled camera auto-return. 
+//
+// L1 = Hover/Walk + Speedhack ( when walking, not riding )
+// R2 = Go through walls
+// L2 (hold) + R1(tap) = rocket jump/climb
+//
+// Put me in c:\users\<you>\Documents\PCSX2\cheats\C19A374E.pnach
+//
+// Bugs: I've finished almost the entire game with the codes running and the only crash I've encountered
+// 		is around the first colossus when messing during a cutscene. If in doubt load from a shrine 
+//		(instead of save-state). E.g. it's fine to save to MEMORY CARD from a broken save state, then reboot
+//		and load it back from MEMORY CARD.
+//
+// Note: USA version only
+// Note: PCSX2 statically loads PS2's mem at 0x20000000, and accepts e.g. 0x20001234 / 0x00001234 as equivalent. <3
+// Note: I've left the R3000 branch/delay/unnecessary slots out of habit. Gives you some room to work.
+//
+
+// == == == L1 to Hover - Except on horsey.  (2x codes)
+// == -- == -- == -- == -- == -- == -- == -- == -- ==
+
+// Jump into the codecave
+patch=1,EE,011CB704,word,0C020700	// new alteration
+//patch=1,EE,011CB704,word,0C471D26	// original value
+
+patch=1,EE,20081C00,word,3C020107		// 	lui	v0,0x001E			// Load "are we on the horsey" into v1
+patch=1,EE,20081C04,word,8C43067C		//	lw	v1,0xDB0(v0)		
+patch=1,EE,20081C08,word,0
+patch=1,EE,20081C0C,word,1460000A		//  bnez	v1,pos_00081C38		// if so, no hax for you
+patch=1,EE,20081C10,word,0
+patch=1,EE,20081C14,word,0
+patch=1,EE,20081C18,word,0
+patch=1,EE,20081C1C,word,3C02001E		// 	lui	v0,0x001E			// Load pad values into v1
+patch=1,EE,20081C20,word,8C430DB0		//	lw	v1,0xDB0(v0)
+patch=1,EE,20081C24,word,0
+patch=1,EE,20081C28,word,30630004		//	andi	v1,0x0004		// Filter out L1
+patch=1,EE,20081C2C,word,2463FFFC		//	addiu	v1,-0x4
+patch=1,EE,20081C30,word,10600012		//	beqz	v1,pos_00081C7C	// If pressed, go there
+patch=1,EE,20081C34,word,0
+patch=1,EE,20081C38,word,3C02011C		//	lui	v0,0x011C			// Load address of animation lock
+patch=1,EE,20081C3C,word,344274CC		//	ori	v0,0x74CC
+patch=1,EE,20081C40,word,3C03AE72		//	lui	v1,0xAE72			// load the oiriginal value
+patch=1,EE,20081C44,word,34630000		//	ori	v1,0x0				// lol
+patch=1,EE,20081C48,word,AC430000		//	sw	v1,(v0)				// store it
+patch=1,EE,20081C4C,word,0
+patch=1,EE,20081C50,word,3C02011C		//	lui	v0,0x011C			// load address of player runspeed
+patch=1,EE,20081C54,word,34427654		//	ori	v0,0x7654			// 
+patch=1,EE,20081C58,word,3C033C01		//	lui	v1,0x3C01			// load float value 1.0something
+patch=1,EE,20081C5C,word,34633FA0		//	ori	v1,0x3FA0
+patch=1,EE,20081C60,word,AC430000		//	sw	v1,(v0)				// write the new runspeed
+patch=1,EE,20081C64,word,0
+patch=1,EE,20081C68,word,0
+patch=1,EE,20081C6C,word,3C02011C		//	lui	v0,0x011C			// Load 0x011C7498 (original jump target)
+patch=1,EE,20081C70,word,34427498		//	ori	v0,0x7498
+patch=1,EE,20081C74,word,400008			//	jr	v0					// Go there, we're finished
+patch=1,EE,20081C78,word,0				
+patch=1,EE,20081C7C,word,3C03001E		// 	lui	v1,0x001E			// L1 pressed, check for triangle
+patch=1,EE,20081C80,word,8C630DB0		//	lw	v1,0xDB0(v1)		// 
+patch=1,EE,20081C84,word,30630010		//	andi	v1,0x0010		// Check if button 10 (tri) is down
+patch=1,EE,20081C88,word,2463FFF0		//	addiu	v1,-0x10		// store in v1
+patch=1,EE,20081C8C,word,0
+patch=1,EE,20081C90,word,3C020106		//	lui	v0,0x0106			// Load player pointer into v0
+patch=1,EE,20081C94,word,3442FE08		//	ori	v0,0xFE08			//
+patch=1,EE,20081C98,word,8C420000		//	lw	v0,(v0)				// use another reg if on real ps2
+patch=1,EE,20081C9C,word,0
+patch=1,EE,20081CA0,word,3C010192		//	lui	at,0x0192			// Load the "running" animation ID
+patch=1,EE,20081CA4,word,3421740C		//	ori	at,0x740C			// 
+patch=1,EE,20081CA8,word,0
+patch=1,EE,20081CAC,word,AC4000C4		//	sw	zero,0xC4(v0)		// Zero out the player gravity [ptr+0xC4]
+patch=1,EE,20081CB0,word,0				
+patch=1,EE,20081CB4,word,14600006		//	bnez	v1,pos_00081CD0	// Skip to 81CD0 if not jumping
+patch=1,EE,20081CB8,word,0
+patch=1,EE,20081CBC,word,3C010192		//	lui	at,0x0192			// Otherwise load jumping animation
+patch=1,EE,20081CC0,word,34219144		//	ori	at,0x9144			// 8CF8 also works
+patch=1,EE,20081CC4,word,0
+patch=1,EE,20081CC8,word,3C034080		//	lui	v1,0x4080			// Load like 2.something as upward vel
+patch=1,EE,20081CCC,word,AC4300C4		//	sw	v1,0xC4(v0)			// write to gravity [ptr+0xC4]
+patch=1,EE,20081CD0,word,0
+patch=1,EE,20081CD4,word,AC410250		//	sw	at,0x250(v0)		// write the anim value from at [ptr+250]
+patch=1,EE,20081CD8,word,0
+patch=1,EE,20081CDC,word,3C02011C		//	lui	v0,0x011C			// writes a nop to the code which
+patch=1,EE,20081CE0,word,344274CC		//	ori	v0,0x74CC			// sets new player animations
+patch=1,EE,20081CE4,word,AC400000		//	sw	zero,(v0)
+patch=1,EE,20081CE8,word,0
+patch=1,EE,20081CEC,word,3C02011C		//	lui	v0,0x011C			// load addr of player runspeed
+patch=1,EE,20081CF0,word,34427654		//	ori	v0,0x7654			//
+patch=1,EE,20081CF4,word,3C033C01		//	lui	v1,0x3C01			// Load like 2.something as
+patch=1,EE,20081CF8,word,34634020		//	ori	v1,0x4020			// as a multiplier
+patch=1,EE,20081CFC,word,AC430000		//	sw	v1,(v0)				// write it
+patch=1,EE,20081D00,word,0
+patch=1,EE,20081D04,word,3C02011C		//	lui	v0,0x011C			// load original return address
+patch=1,EE,20081D08,word,34427498		//	ori	v0,0x7498			
+patch=1,EE,20081D0C,word,400008			//	jr	v0					// go there
+patch=1,EE,20081D10,word,00000000		//	le fin
+
+
+// == == ==  Hold R2 to go through walls (2x codes)
+// == -- == -- == -- == -- == -- == -- == -- == -- ==
+
+// Jump to the code cave
+patch=1,EE,01216458,word,0C020776
+
+// Code cave
+patch=1,EE,00081DD8,word,3C02001E
+patch=1,EE,00081DDC,word,34420DB0
+patch=1,EE,00081DE0,word,8C430000		// read the value
+
+patch=1,EE,00081DE4,word,00000000		// lw delay slot ( not needed in emu, but for the sake of doing things right...)
+//patch=1,EE,00081DE8,word,2463FFFE		// had to add an offset (-2) and lw delay slot
+patch=1,EE,00081DE8,word,30630002		// let's use andi v1,v1,0x02 instead so other buttons can be pushed
+patch=1,EE,00081DEC,word,00000000
+
+//patch=1,EE,00081DF0,word,10600005  		// beqz  146 for bnez
+patch=1,EE,00081DF0,word,14600005			// bnez v1,0x81e08 since we using bitmasks now
+patch=1,EE,00081DF4,word,00000000
+
+patch=1,EE,00081DF8,word,3C02011E
+patch=1,EE,00081DFC,word,3442BDA0
+patch=1,EE,00081E00,word,00400008
+patch=1,EE,00081E04,word,00000000	// some nops for now
+patch=1,EE,00081E08,word,00000000	// some nops for now
+
+patch=1,EE,00081E38,word,03E00008
+
+
+
+
+// == -- == -- == Rocket Jump
+// == -- == -- == -- == -- == -- == -- == -- == -- ==
+
+// Jump to the code cave
+patch=1,EE,011D47D0,word,0C020751	// jal 0x81D44
+
+
+// The code cave
+patch=1,EE,00081D44,word,3C02001E	// 	lui	v0,0x001E				// An address containing pad input values
+patch=1,EE,00081D48,word,34420DB0	// 	ori	v0,0xDB0
+patch=1,EE,00081D4C,word,8C430000	// 	lw	v1,(v0)					// Read the value
+patch=1,EE,00081D50,word,00000000	//	nop
+patch=1,EE,00081D54,word,30630009	//	andi	v1,-0x9				// 0x01 (left trigger) + 0x08 (R1) = 0x09
+patch=1,EE,00081D58,word,2463FFF7	//	addiu	v1,v1,-0x9
+patch=1,EE,00081D5C,word,14600014	//	bnez	v1,pos_00081DB0		// If not holding triggers go to where we were supposed to anyway
+patch=1,EE,00081D60,word,00000000	//	nop
+
+patch=1,EE,00081D64,word,3C022106	//	lui	v0,0x2106			// Contains pointer to player location struct
+patch=1,EE,00081D68,word,3442FE08	//	ori	v0,0xFE08			// since it changes randomly based on area
+patch=1,EE,00081D6C,word,00000000	// 	nop
+
+
+patch=1,EE,00081D70,word,8C430000	// 	lw	v1,(v0)				// v1 now has plauyer location struct address
+patch=1,EE,00081D74,word,00000000	//	nop
+
+patch=1,EE,00081D78,word,3C023E20	// 	lui		v0,0x3F00			// load 0x3f80 (2.0f) into f00 (upper half)
+patch=1,EE,00081D7C,word,44820000	//	mtc1	v0,f00			// shove that into f00	
+patch=1,EE,00081D80,word,C4610164	// 	lwc1	f01,0x164(v1)	// ypos @ [struct+164], load into f01
+patch=1,EE,00081D84,word,00000000	//	nop		
+patch=1,EE,00081D88,word,46000840	//	add.s	f01,f01,f00		// add that hardcoded value
+
+patch=1,EE,00081D8C,word,E4610164	// 	swc1	f01,0x164(v1)	// save the new value back over
+patch=1,EE,00081D90,word,00000000	// 	nop
+
+// Some space left here for modification
+
+patch=1,EE,00081DB0,word,3C02011E	// 	lui	v0,0x011E			// load the target from the original jal
+patch=1,EE,00081DB4,word,3442C0E0	//	ori	v0,0xC0E0			// and the other bit of it :p
+patch=1,EE,00081DB8,word,00400008	//	jr	v0					/ and jump there
+patch=1,EE,00081DBC,word,00000000	//	nop
+
+
+
+// == Other random codes
+
+// == == == Disable camera auto-return ( by zeroing the speed constant )
+patch=1,EE,216CCBD4,word,00000000
+
+// == == == Center Camera Horizontally (half way)
+patch=1,EE,21417C38,word,4480B800
+
+
+// == == == Infinite grip
+//patch=1,EE,212D9BD0,extended,447A0000
+//patch=1,EE,212DE260,extended,447A0000
+
+// == == == Parachute equipped
+//patch=1,EE,212DA3E4,extended,00000122
+
+
+// == == == Default camera height offset, from about 0.17 to 0.1
+patch=1,EE,01410D0C,word,3C013C23
+
+
+// == == == Old Disable camera auto-return
+// Note: had to use L2 to center the cam with this one
+//patch=1,EE,01426CC4,word,00000000
+
+// == == == Old Center camera Horizontally (fully)
+//patch=1,EE,21417734,word,00000000
+
+// == == == Old center cam horizontally ( with optional float value )
+//patch=1,EE,014176E8,word,C6000000
+//patch=1,EE,01072230,word,00000000  // the float value
+//patch=1,EE,0141770C,word,00000000
+//patch=1,EE,01417ECC,word,00000000
+//patch=1,EE,0141B8EC,word,00000000
+
+// ===== USA DEBUG MENU
+// courtesy of TCRF
+
+//patch=1,EE,201289E8,word,8E02000C
+//patch=1,EE,201289EC,word,30420100
+//patch=1,EE,201289F0,word,10400003
+//patch=1,EE,201289F4,word,00000000
+//patch=1,EE,201289F8,word,0C494898
+//patch=1,EE,201289FC,word,00000000
+//patch=1,EE,20128A00,word,8E02000C
+//patch=1,EE,20128A04,word,24030200
+//patch=1,EE,20128A08,word,14430003
+//patch=1,EE,20128A0C,word,00000000
+//patch=1,EE,20128A10,word,0C51066E
+//patch=1,EE,20128A14,word,00000000
+//patch=1,EE,20128A18,word,8E02000C
+//patch=1,EE,20128A1C,word,24030400
+//patch=1,EE,20128A20,word,14430003
+//patch=1,EE,20128A24,word,00000000
+//patch=1,EE,20128A28,word,0C4E2016
+//patch=1,EE,20128A2C,word,00000000
+//patch=1,EE,20128A30,word,0C4D06FA
+//patch=1,EE,20128A34,word,00000000
+//patch=1,EE,20128A38,word,084D4501
+//patch=1,EE,20128A3C,word,00000000
+//patch=1,EE,213513F4,word,00000000
+//patch=1,EE,213513FC,word,0C04A27A
+
+
+
+
+
+
+
+
