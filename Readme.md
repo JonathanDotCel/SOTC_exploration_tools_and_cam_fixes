@@ -1,4 +1,6 @@
 
+![](social_card_PNG.png)
+
 # Shadow Of the Colossus (USA) - Exploration Tools + Camera Fixes
 
 Fixes:
